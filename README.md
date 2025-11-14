@@ -1,15 +1,15 @@
 # AI-powered Review Moderation system
 
-This project is a demo of a full-stack application that allows users to submit reviews, which are automatically moderating using OpenAI's moderation endpoint. Reviews are classified into categories such as allowed, pending, or to be deleted, and the frontend displays only approved content.
+This project is a demo of a full-stack application that allows users to submit reviews, which are automatically moderated using OpenAI's moderation endpoint. Reviews are classified into categories such as allowed, pending, or to be deleted, and the frontend displays only approved content. 
 
-Key features:
+Features include:
 * Automatic AI moderation of submitted reviews
 * RESTful API built with Django REST Framework
-* Frontend using Vue 3
+* Frontend built using Vue 3
 * CSRF & CORS protection for secure client-server communication
 * Secure Django Admin panel for viewing all moderation results
 
-## Quickstart
+## Installation
 
 ### Django (Backend)
 
@@ -48,7 +48,7 @@ Split development into 3 phases:
 
 ### Phase 1: Models & Services
 
-The first step was to lay down the backend foundation; designing the data model and setting up a modular service layer to handle AI moderation logic. Instead of putting moderation logic directly in the model or views, I utilized the Domain Service Pattern to create created a dedicated service module (moderation_service.py) to interact with OpenAI's Moderation API, keeping the AI integration modular and reusable, making it easy for a future developer to easily improve upon it.
+The first step was to lay down the backend foundation; designing the data model and setting up a modular service layer to handle AI moderation logic. Instead of putting moderation logic directly in the model or views, I utilized the Domain Service Pattern to create created a dedicated service module `moderation_service.py` to interact with OpenAI's Moderation API, keeping the AI integration modular and reusable, making it easy for a future developer to improve upon it.
 
 ```txt
 backend/
@@ -77,7 +77,7 @@ flowchart TD
 
 ### Phase 2: Automatic Review System
 
-Djangos `signals.py` was used to automatically trigger moderation logic before a review is saved. Specifically, we used a `pre_save` signal that listens for new Review objects and calls the moderation service before they're written to the database. 
+Django's `signals.py` was used to automatically trigger moderation logic before a review is saved to the database. Specifically, we used a `pre_save` signal that listens for new Review objects and calls the moderation service before they're written in. 
 
 Django REST Framework allows for URLs to serve JSON data as opposed to templates. Serializers are used to convert complex data like Django models into JSON. 
 
@@ -126,6 +126,7 @@ flowchart TD
 This is a synchronous service, good for a small scale project, but for a proper production app post_save and asynchronous would be more suitable, as db operations would not be impacted by slow API response times.
 
 Additionally, prompting GPT for most of the reviews might be a bit overkill, but this is mostly do demonstrate different types of AI integrations using Python. In production, something more complicated that uses tokens more sparingly should be used.
+
 
 
 
