@@ -88,16 +88,28 @@ backend/
 The moderation logic works as follows:
 ```mermaid
 flowchart TD
-    A{Flagged?} -->|True| B(Find the category with the highest risk)
-    B --> C{How high is the risk evaluation?}
-    C -->|Risk Score <= 0.3| D[Allow]
-    C --> E[Review]
-    C -->|Risk Score >7.5| F[Delete]
-    A --> |False| H[Evaluate for spam]
-    H --> I{What is the spam likelihood?}
-    I --> |Spam Score > 8| F[Delete]
-    I --> G[Allow]
+    A{OpenAI flagged it?} -->|Yes| B(Take the highest-scoring category)
+    B --> C{Risk score >= 0.8?}
+    C -->|Yes| DEL[Delete]
+    C -->|No| S1{Spam check}
+    S1 -->|Score > 0.8| DEL
+    S1 -->|Lower, or check unavailable| PEND[Hold for human review]
+
+    A -->|No| S2{Spam check}
+    S2 -->|Check unavailable| PEND
+    S2 -->|Score > 0.8| DEL
+    S2 -->|Lower| ALLOW[Allow]
 ```
+
+Two rules are load-bearing here:
+
+* **Flagged content is never auto-allowed.** OpenAI's `flagged` is calibrated
+  per category, and those thresholds are deliberately not uniform — high-harm
+  categories flag at low raw scores. The scores only decide whether a flagged
+  review is deleted outright or held for a human.
+* **A failed spam check means "unknown", not "clean".** If the check cannot
+  run, the review is held rather than approved, so an API outage cannot
+  approve content by default.
 
 
 ### Phase 2: Automatic Review System
@@ -106,10 +118,17 @@ Djangos `signals.py` was used to automatically trigger moderation logic before a
 
 Django REST Framework allows for URLs to serve JSON data as opposed to templates. Serializers are used to convert complex data like Django models into JSON. 
 
-Then we need to complete the `views.py` and `urls.py` with Django REST Frameworks `ModelViewSet` and a `router` to build a simple RESTful API.
+Then we need to complete the `views.py` and `urls.py` with a Django REST Framework
+viewset and a `router` to build a simple RESTful API.
 
 `GET /api/reviews/` → List all allowed reviews
 `POST /api/reviews/` → Submit a new review
+
+The viewset is built from the create, list and retrieve mixins rather than
+`ModelViewSet`, so update and destroy are never routed. With `ModelViewSet` a
+caller could get benign content approved and then `PATCH` in anything else,
+because moderation ran only on creation. The signal now also re-moderates any
+save that changes the content, so the guarantee holds at the model layer too.
 
 
 
