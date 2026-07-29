@@ -1,39 +1,60 @@
+import logging
+
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
+
 from .models import Review
 from .services.moderation_service import OpenAIModerationService
+
+logger = logging.getLogger(__name__)
 
 moderation_service = OpenAIModerationService()
 
 
-@receiver(pre_save, sender=Review)
-def auto_moderate(sender, instance: Review, **kwargs):
-    """
-    Automatically moderate new reviews before they are saved.
-    Only moderate when the review is new (no PK).
+def _needs_moderation(instance: Review) -> bool:
+    """True for new reviews, and for any save that changes the content.
+
+    The API no longer exposes update, but re-moderating on content change
+    keeps the guarantee at the model layer, which the admin and any future
+    code path also have to go through.
     """
     if instance.pk is None:
-        if instance.pk is None:  # Only moderate new reviews
-            print("New Review Submitted - Initiating Automatic Review")
-            try:
-                moderation_result = moderation_service.moderate(instance.content)
+        return True
 
-                instance.risk_category = moderation_result.get("risk_category", "appropriate")
-                instance.confidence = moderation_result.get("confidence", 0.0)
-                instance.status = moderation_result.get("status", "pending")
-                instance.moderation_data_full = moderation_result.get("moderation_data_full", {})
-                instance.moderated_at = timezone.now()
+    previous_content = (
+        Review.objects.filter(pk=instance.pk).values_list("content", flat=True).first()
+    )
+    return previous_content is not None and previous_content != instance.content
 
-                print("Moderation Result Logging:")
-                print(f"* Status: {instance.status}")
-                print(f"* Risk Category: {instance.risk_category}")
-                print(f"* Confidence: {instance.confidence:.2f}")
 
-            except Exception as e:
-                print(f"Moderation failed: {e}")
-                instance.status = "pending"
-                instance.risk_category = "appropriate"
-                instance.confidence = 0.0
-                instance.moderation_data_full = {"error": str(e)}
-                instance.moderated_at = timezone.now()
+@receiver(pre_save, sender=Review)
+def auto_moderate(sender, instance: Review, **kwargs):
+    """Moderate review content before it is saved."""
+    if not _needs_moderation(instance):
+        return
+
+    try:
+        moderation_result = moderation_service.moderate(instance.content)
+
+        instance.risk_category = moderation_result.get("risk_category", "appropriate")
+        instance.risk_score = moderation_result.get("risk_score", 0.0)
+        instance.status = moderation_result.get("status", "pending")
+        instance.moderation_data_full = moderation_result.get("moderation_data_full", {})
+        instance.moderated_at = timezone.now()
+
+        logger.info(
+            "Moderated review: status=%s category=%s risk_score=%.2f",
+            instance.status,
+            instance.risk_category,
+            instance.risk_score,
+        )
+
+    except Exception as e:
+        # Never record a failure as a clean verdict: hold the review instead.
+        logger.error("Moderation failed, holding review as pending: %s", e)
+        instance.status = "pending"
+        instance.risk_category = "unknown"
+        instance.risk_score = 0.0
+        instance.moderation_data_full = {"error": str(e)}
+        instance.moderated_at = timezone.now()

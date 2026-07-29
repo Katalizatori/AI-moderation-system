@@ -11,6 +11,7 @@ class Review(models.Model):
 
     RISK_CATEGORY_CHOICES = [
         ("appropriate", "Appropriate"),
+        ("unknown", "Unknown"),
         ("sexual", "Sexual"),
         ("hate", "Hate"),
         ("harassment", "Harassment"),
@@ -36,7 +37,10 @@ class Review(models.Model):
         choices=RISK_CATEGORY_CHOICES,
         default="appropriate",
     )
-    confidence = models.FloatField(default=0.0)
+    # How dangerous the content is judged to be: higher is always worse,
+    # whatever status it ended up with. Sorting pending reviews by this
+    # descending gives a worst-first moderation queue.
+    risk_score = models.FloatField(default=0.0)
     moderation_data_full = models.JSONField(
         default=dict
     )  # Store full data, just in case.
@@ -45,22 +49,4 @@ class Review(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.risk_category}: {self.confidence:.2f}"
-
-    # def moderate(self):
-    #     """
-    #     Manual moderation fallback. For testing purposes only.
-    #     """
-    #     from .services.moderation_service import OpenAIModerationService
-
-    #     service = OpenAIModerationService()
-    #     result = service.moderate(self.content)
-
-    #     self.status = result["status"]
-    #     self.risk_category = result["risk_category"]
-    #     self.confidence = result["confidence"]
-    #     self.moderation_data_full = result["moderation_data_full"]
-    #     self.moderated_at = timezone.now()
-
-    #     self.save()
-    #     return self.status
+        return f"{self.risk_category}: {self.risk_score:.2f}"

@@ -8,6 +8,5 @@ class ReviewsConfig(AppConfig):
     name = "reviews"
 
     def ready(self):
-        import reviews.signals
-
-        print("Signals registered.")
+        # Imported for the side effect of registering the pre_save receiver.
+        import reviews.signals  # noqa: F401

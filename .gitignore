@@ -7,10 +7,16 @@ __pycache__/
 # Virtual environment
 venv/
 env/
+.venv/
 
 # Django stuff
 *.sqlite3
 *.log
+
+# Test artifacts
+.coverage
+htmlcov/
+.pytest_cache/
 
 # Node/Vue
 node_modules/

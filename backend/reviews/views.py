@@ -1,24 +1,28 @@
 # reviews/views.py
 
-from rest_framework import viewsets, permissions
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt # For development only
-
+from django.views.decorators.csrf import csrf_exempt  # For development only
+from rest_framework import mixins, permissions, viewsets
 
 from .models import Review
-from .serializers import ReviewSerializer, ReviewCreateSerializer
+from .serializers import ReviewCreateSerializer, ReviewSerializer
 
-
-# Create your views here.
 
 # Bypassing / disabling authentication for the sake of simplicity
-@method_decorator(csrf_exempt, name='dispatch')
-class ReviewViewSet(viewsets.ModelViewSet):
+@method_decorator(csrf_exempt, name="dispatch")
+class ReviewViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Public read and submit only.
 
-    queryset = (
-        Review.objects.filter(status="allowed")
-        .order_by("-created_at")
-    )
+    Update and destroy are deliberately not exposed. Moderation runs on
+    create, so an editable review would let a caller get benign content
+    approved and then swap in whatever they liked.
+    """
+
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
@@ -28,6 +32,3 @@ class ReviewViewSet(viewsets.ModelViewSet):
         if self.request.method == "POST":
             return ReviewCreateSerializer
         return ReviewSerializer
-
-    def perform_create(self, serializer):
-        serializer.save()

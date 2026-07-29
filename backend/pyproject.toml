@@ -1,0 +1,13 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "project.settings"
+testpaths = ["reviews/tests"]
+python_files = ["test_*.py"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+exclude = ["migrations", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

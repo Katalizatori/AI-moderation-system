@@ -1,6 +1,6 @@
 from django.contrib import admin
-from .models import Review
 
+from .models import Review
 
 # Register your models here.
 
@@ -12,7 +12,7 @@ class ReviewAdmin(admin.ModelAdmin):
         "id",
         "status",
         "risk_category",
-        "confidence",
+        "risk_score",
         "created_at",
     )
     list_filter = ("status", "risk_category", "created_at")

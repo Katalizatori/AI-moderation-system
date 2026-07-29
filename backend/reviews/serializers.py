@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
+
 from .models import Review
+
 
 # For reading / displaying the reviews
 class ReviewSerializer(serializers.ModelSerializer):
@@ -13,7 +14,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             "created_at",
             "status",
             "risk_category",
-            "confidence",
+            "risk_score",
             "moderated_at",
         ]
         read_only_fields = [
@@ -21,7 +22,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             "created_at",
             "status",
             "risk_category",
-            "confidence",
+            "risk_score",
             "moderated_at",
         ]
 

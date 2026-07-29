@@ -39,6 +39,31 @@ npm run dev
 ```
 Hosted on: http://localhost:5173/
 
+## Testing
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+pytest
+```
+
+With a coverage report for the moderation path:
+
+```bash
+pytest --cov=reviews --cov-report=term-missing
+```
+
+Lint:
+
+```bash
+ruff check .
+```
+
+The suite is hermetic. Outbound HTTP is blocked by an autouse fixture in
+`conftest.py`, so no test reaches the OpenAI API and no API key is needed to
+run it — a test that forgets to mock a request fails loudly instead of
+silently calling the real endpoint.
+
 ## Project development
 
 Split development into 3 phases:

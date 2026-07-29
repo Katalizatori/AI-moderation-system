@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
-from .views import ReviewViewSet
 
+from .views import ReviewViewSet
 
 # Automatically generating RESTful URL patterns.
 router = DefaultRouter()
