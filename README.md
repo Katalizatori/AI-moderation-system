@@ -1,6 +1,6 @@
 # AI-powered Review Moderation system
 
-This project is a demo of a full-stack application that allows users to submit reviews, which are automatically moderating using OpenAI's moderation endpoint. Reviews are classified into categories such as allowed, pending, or to be deleted, and the frontend displays only approved content.
+This project is a demo of a full-stack application that allows users to submit reviews, which are automatically moderated using OpenAI's moderation endpoint. Reviews are classified into categories such as allowed, pending, or to be deleted, and the frontend displays only approved content.
 
 Key features:
 * Automatic AI moderation of submitted reviews
@@ -73,7 +73,7 @@ Split development into 3 phases:
 
 ### Phase 1: Models & Services
 
-The first step was to lay down the backend foundation; designing the data model and setting up a modular service layer to handle AI moderation logic. Instead of putting moderation logic directly in the model or views, I utilized the Domain Service Pattern to create created a dedicated service module (moderation_service.py) to interact with OpenAI's Moderation API, keeping the AI integration modular and reusable, making it easy for a future developer to easily improve upon it.
+The first step was to lay down the backend foundation; designing the data model and setting up a modular service layer to handle AI moderation logic. Instead of putting moderation logic directly in the model or views, I utilized the Domain Service Pattern to create a dedicated service module (moderation_service.py) to interact with OpenAI's Moderation API, keeping the AI integration modular and reusable, making it easy for a future developer to improve upon it.
 
 ```txt
 backend/
@@ -115,7 +115,7 @@ Then we need to complete the `views.py` and `urls.py` with Django REST Framework
 
 ### Phase 3: Vue Frontend
 
-With the backend fully functional and the moderation ready, the final step was to build a responsive frontend to let users submit reviews and browse approved content. I chose Vue 3 with Vite for a simple and fast setup. There are two pages, one where a review can be submitted, and one that lists all aproved reviews. By filtering with `?status=allowed`, we ensure that only moderated and approved reviews are shown.
+With the backend fully functional and the moderation ready, the final step was to build a responsive frontend to let users submit reviews and browse approved content. I chose Vue 3 with Vite for a simple and fast setup. There are two pages, one where a review can be submitted, and one that lists all approved reviews. By filtering with `?status=allowed`, we ensure that only moderated and approved reviews are shown.
 
 Communicaiton between backend and frontend is when we start having to take into consideration security measures. Due to the demonstrative nature of the project, only basic protections we're used, but in such a way that upgrading is a matter of simply commenting in the appropriate modules. Specifically, I configured CSRF protection through trusted origins and proper headers, but minimally configured CORS to allow for anyonymous reviews for demonstration purposes.
 
